@@ -1,65 +1,349 @@
 <div class="yn-typing-settings">
-  <div class="inline-drawer">
-    <div class="inline-drawer-toggle inline-drawer-header">
-      <b>y-ntyping</b>
-      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+
+    <div class="inline-drawer">
+
+        <div class="inline-drawer-toggle inline-drawer-header">
+
+            <b>y-ntyping</b>
+
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+
+        </div>
+
+
+        <div class="inline-drawer-content">
+
+
+            <!-- ENABLED -->
+
+            <div class="flex-container flexGap5 marginBot10">
+
+                <label class="checkbox_label">
+
+                    <input
+                        type="checkbox"
+                        id="yn_enabled"
+                    >
+
+                    <span>Enabled</span>
+
+                </label>
+
+            </div>
+
+
+            <!-- STREAMING -->
+
+            <div class="flex-container flexGap5 marginBot10">
+
+                <label class="checkbox_label">
+
+                    <input
+                        type="checkbox"
+                        id="yn_show_streaming"
+                    >
+
+                    <span>
+                        Show during streaming
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- AVATAR -->
+
+            <div class="flex-container flexGap5 marginBot10">
+
+                <label class="checkbox_label">
+
+                    <input
+                        type="checkbox"
+                        id="yn_show_avatar"
+                    >
+
+                    <span>
+                        Show avatar
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <!-- POSITION -->
+
+            <div class="marginBot10">
+
+                <label for="yn_position">
+                    Position
+                </label>
+
+                <select
+                    id="yn_position"
+                    class="text_pole"
+                >
+
+                    <option value="bottom">
+                        Bottom (sticky)
+                    </option>
+
+                    <option value="inline">
+                        Inline (after last message)
+                    </option>
+
+                    <option value="floating">
+                        Floating
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- ANIMATION -->
+
+            <div class="marginBot10">
+
+                <label for="yn_animation">
+                    Animation
+                </label>
+
+                <select
+                    id="yn_animation"
+                    class="text_pole"
+                >
+
+                    <option value="bounce">
+                        Bounce (Y/n style)
+                    </option>
+
+                    <option value="pulse">
+                        Pulse
+                    </option>
+
+                    <option value="wave">
+                        Wave
+                    </option>
+
+                    <option value="fade">
+                        Fade
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- DEFAULT COLOR -->
+
+            <div class="marginBot10">
+
+                <label for="yn_default_color">
+                    Default name color
+                </label>
+
+                <input
+                    type="color"
+                    id="yn_default_color"
+                    value="#7dffb3"
+                    class="text_pole yn-color-input"
+                >
+
+            </div>
+
+
+            <!-- TEXT -->
+
+            <div class="marginBot10">
+
+                <label for="yn_text">
+                    Text (use {{char}})
+                </label>
+
+                <input
+                    type="text"
+                    id="yn_text"
+                    class="text_pole wide100p"
+                    value="is typing..."
+                >
+
+            </div>
+
+
+            <!-- FONT SIZE -->
+
+            <div class="marginBot10">
+
+                <label for="yn_font_size">
+                    Text size
+                </label>
+
+                <input
+                    type="number"
+                    id="yn_font_size"
+                    class="text_pole"
+                    min="8"
+                    max="30"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- NAME SIZE -->
+
+            <div class="marginBot10">
+
+                <label for="yn_name_size">
+                    Name size
+                </label>
+
+                <input
+                    type="number"
+                    id="yn_name_size"
+                    class="text_pole"
+                    min="8"
+                    max="30"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- GAP -->
+
+            <div class="marginBot10">
+
+                <label for="yn_gap">
+                    Element spacing
+                </label>
+
+                <input
+                    type="number"
+                    id="yn_gap"
+                    class="text_pole"
+                    min="0"
+                    max="30"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- X -->
+
+            <div class="marginBot10">
+
+                <label for="yn_offset_x">
+                    Horizontal offset
+                </label>
+
+                <input
+                    type="number"
+                    id="yn_offset_x"
+                    class="text_pole"
+                    min="-100"
+                    max="100"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- Y -->
+
+            <div class="marginBot10">
+
+                <label for="yn_offset_y">
+                    Vertical offset
+                </label>
+
+                <input
+                    type="number"
+                    id="yn_offset_y"
+                    class="text_pole"
+                    min="-100"
+                    max="100"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- AVATAR SIZE -->
+
+            <div class="marginBot10">
+
+                <label for="yn_avatar_size">
+                    Avatar size
+                </label>
+
+                <input
+                    type="number"
+                    id="yn_avatar_size"
+                    class="text_pole"
+                    min="16"
+                    max="80"
+                    step="1"
+                >
+
+            </div>
+
+
+            <!-- CHARACTER COLORS -->
+
+            <div class="yn-character-settings">
+
+                <div class="yn-section-title">
+
+                    <b>
+                        Character colors
+                    </b>
+
+                    <button
+                        type="button"
+                        id="yn_refresh_characters"
+                        class="menu_button"
+                        title="Refresh"
+                    >
+                        ↻
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="yn_character_list"
+                    class="yn-character-list"
+                >
+
+                    <div class="opacity50">
+                        Open a character or group chat
+                        to configure its typing color.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <small class="opacity50">
+
+                Each character can have its own typing
+                indicator color.
+
+                <br>
+
+                Style inspired by the
+                Y/n (ex-Draco is Typing) app.
+
+            </small>
+
+
+        </div>
+
     </div>
-    <div class="inline-drawer-content">
 
-      <div class="flex-container flexGap5 marginBot10">
-        <label class="checkbox_label">
-          <input type="checkbox" id="yn_enabled">
-          <span>Enabled</span>
-        </label>
-      </div>
-
-      <div class="flex-container flexGap5 marginBot10">
-        <label class="checkbox_label">
-          <input type="checkbox" id="yn_show_streaming">
-          <span>Show during streaming</span>
-        </label>
-      </div>
-
-      <div class="flex-container flexGap5 marginBot10">
-        <label class="checkbox_label">
-          <input type="checkbox" id="yn_show_avatar">
-          <span>Show avatar</span>
-        </label>
-      </div>
-
-      <div class="marginBot10">
-        <label for="yn_position">Position</label>
-        <select id="yn_position" class="text_pole">
-          <option value="bottom">Bottom (sticky)</option>
-          <option value="inline">Inline (after last message)</option>
-          <option value="floating">Floating</option>
-        </select>
-      </div>
-
-      <div class="marginBot10">
-        <label for="yn_animation">Animation</label>
-        <select id="yn_animation" class="text_pole">
-          <option value="bounce">Bounce (Y/n style)</option>
-          <option value="pulse">Pulse</option>
-          <option value="wave">Wave</option>
-          <option value="fade">Fade</option>
-        </select>
-      </div>
-
-      <div class="marginBot10">
-        <label for="yn_name_color">Name color</label>
-        <input type="color" id="yn_name_color" value="#7dffb3" class="text_pole" style="width: 60px; height: 28px; padding: 0;">
-      </div>
-
-      <div class="marginBot10">
-        <label for="yn_text">Text (use {{char}})</label>
-        <input type="text" id="yn_text" class="text_pole wide100p" value="is typing...">
-      </div>
-
-      <small class="opacity50">
-        Style inspired by the Y/n (ex-Draco is Typing) app.
-      </small>
-
-    </div>
-  </div>
 </div>
