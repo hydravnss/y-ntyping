@@ -79,21 +79,39 @@ function updateIndicatorClasses() {
   indicatorEl.style.setProperty("--yn-name-color", s.name_color);
 }
 
+function cleanName(name) {
+  if (!name) return "Character";
+  // Remove file extensions like .png, .jpg, .webp, etc.
+  return name.replace(/\.(png|jpe?g|webp|gif|svg|bmp)$/i, "").trim() || "Character";
+}
+
 function getCurrentCharName() {
   const ctx = getContext();
   if (!ctx) return "Character";
 
-  if (ctx.groupId && ctx.groups) {
-    const group = ctx.groups.find(g => g.id === ctx.groupId);
-    if (group && group.members && group.members.length) {
-      return group.members[0] || "Character";
+  // Single character chat
+  if (ctx.characters && ctx.characterId != null) {
+    const char = ctx.characters[ctx.characterId];
+    if (char && char.name) {
+      return cleanName(char.name);
     }
   }
 
-  if (ctx.characters && ctx.characterId != null) {
-    const char = ctx.characters[ctx.characterId];
-    if (char) return char.name || "Character";
+  // Group chat
+  if (ctx.groupId && ctx.groups) {
+    const group = ctx.groups.find(g => g.id === ctx.groupId);
+    if (group && group.members && group.members.length) {
+      const member = group.members[0];
+      if (typeof member === "string") {
+        const found = ctx.characters?.find(c => c.avatar === member || c.name === member);
+        if (found && found.name) return cleanName(found.name);
+        return cleanName(member);
+      }
+    }
   }
+
+  // Fallback
+  if (ctx.name2) return cleanName(ctx.name2);
 
   return "Character";
 }
@@ -192,5 +210,5 @@ jQuery(async () => {
     }
   });
 
-  console.log("[y-ntyping] Loaded");
+  console.log("[y-ntyping] Loaded v1.0.1");
 });
