@@ -1,0 +1,65 @@
+<div class="yn-typing-settings">
+  <div class="inline-drawer">
+    <div class="inline-drawer-toggle inline-drawer-header">
+      <b>y-ntyping</b>
+      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+    <div class="inline-drawer-content">
+
+      <div class="flex-container flexGap5 marginBot10">
+        <label class="checkbox_label">
+          <input type="checkbox" id="yn_enabled">
+          <span>Enabled</span>
+        </label>
+      </div>
+
+      <div class="flex-container flexGap5 marginBot10">
+        <label class="checkbox_label">
+          <input type="checkbox" id="yn_show_streaming">
+          <span>Show during streaming</span>
+        </label>
+      </div>
+
+      <div class="flex-container flexGap5 marginBot10">
+        <label class="checkbox_label">
+          <input type="checkbox" id="yn_show_avatar">
+          <span>Show avatar</span>
+        </label>
+      </div>
+
+      <div class="marginBot10">
+        <label for="yn_position">Position</label>
+        <select id="yn_position" class="text_pole">
+          <option value="bottom">Bottom (sticky)</option>
+          <option value="inline">Inline (after last message)</option>
+          <option value="floating">Floating</option>
+        </select>
+      </div>
+
+      <div class="marginBot10">
+        <label for="yn_animation">Animation</label>
+        <select id="yn_animation" class="text_pole">
+          <option value="bounce">Bounce (Y/n style)</option>
+          <option value="pulse">Pulse</option>
+          <option value="wave">Wave</option>
+          <option value="fade">Fade</option>
+        </select>
+      </div>
+
+      <div class="marginBot10">
+        <label for="yn_name_color">Name color</label>
+        <input type="color" id="yn_name_color" value="#7dffb3" class="text_pole" style="width: 60px; height: 28px; padding: 0;">
+      </div>
+
+      <div class="marginBot10">
+        <label for="yn_text">Text (use {{char}})</label>
+        <input type="text" id="yn_text" class="text_pole wide100p" value="is typing...">
+      </div>
+
+      <small class="opacity50">
+        Style inspired by the Y/n (ex-Draco is Typing) app.
+      </small>
+
+    </div>
+  </div>
+</div>
