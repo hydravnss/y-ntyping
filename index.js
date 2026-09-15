@@ -13,30 +13,23 @@ const defaultSettings = {
     enabled: true,
     show_streaming: true,
     show_avatar: false,
-
     position: "bottom",
     animation: "bounce",
-
     default_color: "#7dffb3",
     text: "is typing...",
-
     font_size: 15,
     name_size: 15,
     gap: 7,
-
     offset_x: 0,
     offset_y: 0,
-
     avatar_size: 28,
-
     characters: {},
 };
 
 let indicatorEl = null;
 let isGenerating = false;
 let activeCharacterName = "";
-let generationId = 0;
-let stateCheckTimer = null;
+let generationWatcher = null;
 
 
 /* =========================================================
@@ -47,7 +40,8 @@ function getSettings() {
     extension_settings[extensionName] =
         extension_settings[extensionName] || {};
 
-    const settings = extension_settings[extensionName];
+    const settings =
+        extension_settings[extensionName];
 
     for (const [key, value] of Object.entries(defaultSettings)) {
         if (settings[key] === undefined) {
@@ -110,9 +104,10 @@ function getCharacterNamesInCurrentChat() {
         ctx.groupId &&
         Array.isArray(ctx.groups)
     ) {
-        const group = ctx.groups.find(
-            g => g.id === ctx.groupId
-        );
+        const group =
+            ctx.groups.find(
+                g => g.id === ctx.groupId
+            );
 
         if (
             group &&
@@ -120,6 +115,7 @@ function getCharacterNamesInCurrentChat() {
         ) {
             return group.members
                 .map(member => {
+
                     const found =
                         ctx.characters?.find(
                             c =>
@@ -244,6 +240,58 @@ function getCharacterColor(name) {
 
 
 /* =========================================================
+   REAL SILLYTAVERN GENERATION STATE
+========================================================= */
+
+function isActuallyGenerating() {
+    const stop =
+        document.querySelector("#mes_stop");
+
+    if (!stop) {
+        return false;
+    }
+
+    const style =
+        window.getComputedStyle(stop);
+
+    return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        style.opacity !== "0"
+    );
+}
+
+
+function startGenerationWatcher() {
+    stopGenerationWatcher();
+
+    generationWatcher =
+        setInterval(() => {
+
+            if (!isGenerating) {
+                return;
+            }
+
+            if (!isActuallyGenerating()) {
+                hideIndicator();
+            }
+
+        }, 100);
+}
+
+
+function stopGenerationWatcher() {
+    if (generationWatcher) {
+        clearInterval(
+            generationWatcher
+        );
+
+        generationWatcher = null;
+    }
+}
+
+
+/* =========================================================
    INDICATOR
 ========================================================= */
 
@@ -297,7 +345,8 @@ function updateIndicator() {
         return;
     }
 
-    const settings = getSettings();
+    const settings =
+        getSettings();
 
     const name =
         getCurrentCharName();
@@ -369,103 +418,31 @@ function updateIndicator() {
 
 
 /* =========================================================
-   GENERATION STATE
-========================================================= */
-
-/*
- * SillyTavern affiche le bouton STOP pendant une génération.
- * Quand le bouton d'envoi normal revient, la génération est
- * terminée même si un événement de fin a été raté.
- */
-
-function isSillyTavernGenerating() {
-    const stopButton =
-        document.querySelector(
-            "#stop_generation"
-        );
-
-    if (
-        stopButton &&
-        stopButton.offsetParent !== null
-    ) {
-        return true;
-    }
-
-    const sendButton =
-        document.querySelector(
-            "#send_but"
-        );
-
-    if (sendButton) {
-        const display =
-            window.getComputedStyle(
-                sendButton
-            ).display;
-
-        if (display === "none") {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-function startStateCheck() {
-    stopStateCheck();
-
-    stateCheckTimer =
-        setInterval(() => {
-
-            if (!isGenerating) {
-                return;
-            }
-
-            /*
-             * Si SillyTavern n'est plus en génération,
-             * on cache immédiatement l'indicateur.
-             */
-            if (!isSillyTavernGenerating()) {
-                hideIndicator();
-            }
-
-        }, 100);
-}
-
-
-function stopStateCheck() {
-    if (stateCheckTimer) {
-        clearInterval(stateCheckTimer);
-        stateCheckTimer = null;
-    }
-}
-
-
-/* =========================================================
    SHOW
 ========================================================= */
 
 function showIndicator() {
-    const settings = getSettings();
+
+    const settings =
+        getSettings();
 
     if (!settings.enabled) {
         return;
     }
 
     /*
-     * Protection supplémentaire :
-     * si ST n'est pas réellement en train de générer,
-     * on ne montre rien.
+     * ABSOLUTE RULE:
+     * impossible d'afficher l'indicateur
+     * si SillyTavern n'affiche pas son bouton STOP.
      */
-    if (!isSillyTavernGenerating()) {
+    if (!isActuallyGenerating()) {
+        hideIndicator();
         return;
     }
 
     if (!indicatorEl) {
         createIndicator();
     }
-
-    generationId++;
 
     const name =
         getCurrentCharName();
@@ -479,13 +456,21 @@ function showIndicator() {
             name
         );
 
-    indicatorEl.querySelector(
-        ".yn-name"
-    ).textContent = name;
+    const nameEl =
+        indicatorEl.querySelector(
+            ".yn-name"
+        );
 
-    indicatorEl.querySelector(
-        ".yn-text"
-    ).textContent = ` ${text}`;
+    const textEl =
+        indicatorEl.querySelector(
+            ".yn-text"
+        );
+
+    nameEl.textContent =
+        name;
+
+    textEl.textContent =
+        ` ${text}`;
 
     const avatar =
         indicatorEl.querySelector(
@@ -493,6 +478,7 @@ function showIndicator() {
         );
 
     if (settings.show_avatar) {
+
         const src =
             getCurrentAvatar();
 
@@ -503,7 +489,9 @@ function showIndicator() {
             src
                 ? "block"
                 : "none";
+
     } else {
+
         avatar.style.display =
             "none";
     }
@@ -516,7 +504,7 @@ function showIndicator() {
 
     isGenerating = true;
 
-    startStateCheck();
+    startGenerationWatcher();
 }
 
 
@@ -525,13 +513,12 @@ function showIndicator() {
 ========================================================= */
 
 function hideIndicator() {
-    generationId++;
 
     isGenerating = false;
 
     activeCharacterName = "";
 
-    stopStateCheck();
+    stopGenerationWatcher();
 
     if (indicatorEl) {
         indicatorEl.classList.remove(
@@ -546,6 +533,7 @@ function hideIndicator() {
 ========================================================= */
 
 function renderCharacterSettings() {
+
     const container =
         document.getElementById(
             "yn_character_list"
@@ -564,6 +552,7 @@ function renderCharacterSettings() {
     container.innerHTML = "";
 
     if (!names.length) {
+
         container.innerHTML = `
             <div class="opacity50 yn-empty">
                 Open a character or group chat
@@ -575,6 +564,7 @@ function renderCharacterSettings() {
     }
 
     for (const name of names) {
+
         const row =
             document.createElement("div");
 
@@ -601,7 +591,8 @@ function renderCharacterSettings() {
 
         row.querySelector(
             ".yn-character-name"
-        ).textContent = name;
+        ).textContent =
+            name;
 
         row.querySelector(
             ".yn-character-color"
@@ -655,10 +646,11 @@ function renderCharacterSettings() {
 
 
 /* =========================================================
-   LOAD SETTINGS
+   LOAD
 ========================================================= */
 
 async function loadSettings() {
+
     const settings =
         getSettings();
 
@@ -743,6 +735,7 @@ async function loadSettings() {
 jQuery(async () => {
 
     try {
+
         const html =
             await $.get(
                 `${extensionFolderPath}/setting.html`
@@ -754,7 +747,7 @@ jQuery(async () => {
     } catch (error) {
 
         console.warn(
-            "[y-ntyping] Could not load setting.html",
+            "[y-ntyping] setting.html error",
             error
         );
     }
@@ -764,23 +757,20 @@ jQuery(async () => {
     createIndicator();
 
 
-    /* =====================================================
-       SETTINGS
-    ===================================================== */
+    /* SETTINGS */
 
     $("#yn_enabled").on(
         "change",
         function () {
 
-            const enabled =
-                $(this).is(":checked");
-
             saveSetting(
                 "enabled",
-                enabled
+                $(this).is(":checked")
             );
 
-            if (!enabled) {
+            if (
+                !$(this).is(":checked")
+            ) {
                 hideIndicator();
             }
         }
@@ -939,7 +929,7 @@ jQuery(async () => {
 
 
     /* =====================================================
-       GROUP MEMBER
+       GROUP
     ===================================================== */
 
     if (event_types.GROUP_MEMBER_DRAFTED) {
@@ -955,6 +945,7 @@ jQuery(async () => {
                     ctx?.characters?.[chId];
 
                 if (character?.name) {
+
                     activeCharacterName =
                         cleanName(
                             character.name
@@ -978,18 +969,34 @@ jQuery(async () => {
             () => {
 
                 /*
-                 * Petit délai : laisse ST mettre
-                 * son interface de génération à jour.
+                 * ST vient juste de lancer la génération.
+                 * On attend que #mes_stop soit visible.
                  */
-                setTimeout(() => {
 
-                    if (
-                        isSillyTavernGenerating()
-                    ) {
-                        showIndicator();
-                    }
+                let attempts = 0;
 
-                }, 30);
+                const wait =
+                    setInterval(() => {
+
+                        attempts++;
+
+                        if (
+                            isActuallyGenerating()
+                        ) {
+
+                            clearInterval(wait);
+
+                            showIndicator();
+
+                            return;
+                        }
+
+                        if (attempts >= 20) {
+                            clearInterval(wait);
+                            hideIndicator();
+                        }
+
+                    }, 25);
             }
         );
     }
@@ -1003,20 +1010,24 @@ jQuery(async () => {
 
         eventSource.on(
             event_types.GENERATION_ENDED,
-            hideIndicator
+            () => {
+                hideIndicator();
+            }
         );
     }
 
 
     /* =====================================================
-       GENERATION STOPPED
+       STOP
     ===================================================== */
 
     if (event_types.GENERATION_STOPPED) {
 
         eventSource.on(
             event_types.GENERATION_STOPPED,
-            hideIndicator
+            () => {
+                hideIndicator();
+            }
         );
     }
 
@@ -1029,7 +1040,24 @@ jQuery(async () => {
 
         eventSource.on(
             event_types.MESSAGE_RECEIVED,
-            hideIndicator
+            () => {
+                hideIndicator();
+            }
+        );
+    }
+
+
+    /* =====================================================
+       CHARACTER MESSAGE RENDERED
+    ===================================================== */
+
+    if (event_types.CHARACTER_MESSAGE_RENDERED) {
+
+        eventSource.on(
+            event_types.CHARACTER_MESSAGE_RENDERED,
+            () => {
+                hideIndicator();
+            }
         );
     }
 
@@ -1054,7 +1082,43 @@ jQuery(async () => {
     }
 
 
+    /*
+     * SÉCURITÉ SUPPLÉMENTAIRE :
+     * si ST cache #mes_stop, on cache l'indicateur.
+     */
+
+    const stopButton =
+        document.querySelector(
+            "#mes_stop"
+        );
+
+    if (stopButton) {
+
+        const observer =
+            new MutationObserver(() => {
+
+                if (
+                    isGenerating &&
+                    !isActuallyGenerating()
+                ) {
+                    hideIndicator();
+                }
+            });
+
+        observer.observe(
+            stopButton,
+            {
+                attributes: true,
+                attributeFilter: [
+                    "style",
+                    "class"
+                ]
+            }
+        );
+    }
+
+
     console.log(
-        "[y-ntyping] Loaded v1.3.0 - strict generation indicator"
+        "[y-ntyping] v1.4.0 loaded"
     );
 });
