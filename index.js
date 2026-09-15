@@ -1,8 +1,13 @@
 import { extension_settings, getContext } from "../../../extensions.js";
-import { saveSettingsDebounced, eventSource, event_types } from "../../../../script.js";
+import {
+    saveSettingsDebounced,
+    eventSource,
+    event_types
+} from "../../../../script.js";
 
 const extensionName = "y-ntyping";
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+const extensionFolderPath =
+    `scripts/extensions/third-party/${extensionName}`;
 
 const defaultSettings = {
     enabled: true,
@@ -40,7 +45,8 @@ function getSettings() {
     extension_settings[extensionName] =
         extension_settings[extensionName] || {};
 
-    const settings = extension_settings[extensionName];
+    const settings =
+        extension_settings[extensionName];
 
     for (const [key, value] of Object.entries(defaultSettings)) {
         if (settings[key] === undefined) {
@@ -79,10 +85,15 @@ function saveSetting(key, value) {
 ========================================================= */
 
 function cleanName(name) {
-    if (!name) return "Character";
+    if (!name) {
+        return "Character";
+    }
 
     return String(name)
-        .replace(/\.(png|jpe?g|webp|gif|svg|bmp)$/i, "")
+        .replace(
+            /\.(png|jpe?g|webp|gif|svg|bmp)$/i,
+            ""
+        )
         .trim() || "Character";
 }
 
@@ -90,7 +101,9 @@ function cleanName(name) {
 function getCharacterNamesInCurrentChat() {
     const ctx = getContext();
 
-    if (!ctx) return [];
+    if (!ctx) {
+        return [];
+    }
 
 
     /* GROUP CHAT */
@@ -109,7 +122,6 @@ function getCharacterNamesInCurrentChat() {
         ) {
             return group.members
                 .map(member => {
-
                     const found =
                         ctx.characters?.find(
                             c =>
@@ -246,7 +258,9 @@ function getCharacterColor(name) {
 ========================================================= */
 
 function createIndicator() {
-    if (indicatorEl) return;
+    if (indicatorEl) {
+        return;
+    }
 
     indicatorEl =
         document.createElement("div");
@@ -289,7 +303,9 @@ function createIndicator() {
 
 
 function updateIndicator() {
-    if (!indicatorEl) return;
+    if (!indicatorEl) {
+        return;
+    }
 
     const settings = getSettings();
 
@@ -300,7 +316,26 @@ function updateIndicator() {
         getCharacterColor(name);
 
 
-    indicatorEl.className = "";
+    /*
+     * IMPORTANT:
+     * Ne jamais supprimer la classe "visible"
+     * ici. Cette fonction sert uniquement à
+     * mettre à jour le style.
+     */
+
+    indicatorEl.classList.remove(
+        "position-bottom",
+        "position-top",
+        "position-left",
+        "position-right"
+    );
+
+    indicatorEl.classList.remove(
+        "anim-bounce",
+        "anim-pulse",
+        "anim-fade",
+        "anim-none"
+    );
 
 
     indicatorEl.classList.add(
@@ -312,11 +347,10 @@ function updateIndicator() {
     );
 
 
-    if (settings.show_avatar) {
-        indicatorEl.classList.add(
-            "show-avatar"
-        );
-    }
+    indicatorEl.classList.toggle(
+        "show-avatar",
+        !!settings.show_avatar
+    );
 
 
     indicatorEl.style.setProperty(
@@ -356,9 +390,12 @@ function updateIndicator() {
 }
 
 
+/* =========================================================
+   SHOW
+========================================================= */
+
 function showIndicator() {
-    const settings =
-        getSettings();
+    const settings = getSettings();
 
     if (!settings.enabled) {
         return;
@@ -399,19 +436,29 @@ function showIndicator() {
 
 
     if (settings.show_avatar) {
-
         const src =
             getCurrentAvatar();
 
-        avatar.src = src || "";
+        avatar.src =
+            src || "";
 
         avatar.style.display =
-            src ? "block" : "none";
+            src
+                ? "block"
+                : "none";
+    } else {
+        avatar.style.display =
+            "none";
     }
 
 
     updateIndicator();
 
+
+    /*
+     * C'est ici uniquement que l'indicateur
+     * devient visible.
+     */
     indicatorEl.classList.add(
         "visible"
     );
@@ -419,6 +466,10 @@ function showIndicator() {
     isGenerating = true;
 }
 
+
+/* =========================================================
+   HIDE
+========================================================= */
 
 function hideIndicator() {
     if (indicatorEl) {
@@ -438,13 +489,14 @@ function hideIndicator() {
 ========================================================= */
 
 function renderCharacterSettings() {
-
     const container =
         document.getElementById(
             "yn_character_list"
         );
 
-    if (!container) return;
+    if (!container) {
+        return;
+    }
 
 
     const names =
@@ -458,7 +510,6 @@ function renderCharacterSettings() {
 
 
     if (!names.length) {
-
         container.innerHTML = `
             <div class="opacity50 yn-empty">
                 Open a character or group chat
@@ -471,7 +522,6 @@ function renderCharacterSettings() {
 
 
     for (const name of names) {
-
         const row =
             document.createElement("div");
 
@@ -515,14 +565,14 @@ function renderCharacterSettings() {
             "input",
             event => {
 
-                settings.characters[name] =
-                    {
-                        ...(settings.characters[name] || {}),
-                        color:
-                            event.target.value
-                    };
+                settings.characters[name] = {
+                    ...(settings.characters[name] || {}),
+                    color:
+                        event.target.value
+                };
 
                 saveSettingsDebounced();
+
 
                 if (
                     isGenerating &&
@@ -546,6 +596,7 @@ function renderCharacterSettings() {
 
                 renderCharacterSettings();
 
+
                 if (isGenerating) {
                     updateIndicator();
                 }
@@ -563,7 +614,6 @@ function renderCharacterSettings() {
 ========================================================= */
 
 async function loadSettings() {
-
     const settings =
         getSettings();
 
@@ -574,11 +624,13 @@ async function loadSettings() {
             settings.enabled
         );
 
+
     $("#yn_show_streaming")
         .prop(
             "checked",
             settings.show_streaming
         );
+
 
     $("#yn_show_avatar")
         .prop(
@@ -588,37 +640,63 @@ async function loadSettings() {
 
 
     $("#yn_position")
-        .val(settings.position);
+        .val(
+            settings.position
+        );
+
 
     $("#yn_animation")
-        .val(settings.animation);
+        .val(
+            settings.animation
+        );
 
 
     $("#yn_default_color")
-        .val(settings.default_color);
+        .val(
+            settings.default_color
+        );
 
 
     $("#yn_text")
-        .val(settings.text);
+        .val(
+            settings.text
+        );
 
 
     $("#yn_font_size")
-        .val(settings.font_size);
+        .val(
+            settings.font_size
+        );
+
 
     $("#yn_name_size")
-        .val(settings.name_size);
+        .val(
+            settings.name_size
+        );
+
 
     $("#yn_gap")
-        .val(settings.gap);
+        .val(
+            settings.gap
+        );
+
 
     $("#yn_offset_x")
-        .val(settings.offset_x);
+        .val(
+            settings.offset_x
+        );
+
 
     $("#yn_offset_y")
-        .val(settings.offset_y);
+        .val(
+            settings.offset_y
+        );
+
 
     $("#yn_avatar_size")
-        .val(settings.avatar_size);
+        .val(
+            settings.avatar_size
+        );
 
 
     renderCharacterSettings();
@@ -634,7 +712,6 @@ async function loadSettings() {
 jQuery(async () => {
 
     try {
-
         const html =
             await $.get(
                 `${extensionFolderPath}/setting.html`
@@ -657,20 +734,23 @@ jQuery(async () => {
     createIndicator();
 
 
-    /* BASIC SETTINGS */
+    /* =====================================================
+       BASIC SETTINGS
+    ===================================================== */
 
     $("#yn_enabled").on(
         "change",
         function () {
 
+            const enabled =
+                $(this).is(":checked");
+
             saveSetting(
                 "enabled",
-                $(this).is(":checked")
+                enabled
             );
 
-            if (
-                !$(this).is(":checked")
-            ) {
+            if (!enabled) {
                 hideIndicator();
             }
         }
@@ -846,7 +926,6 @@ jQuery(async () => {
 
 
                 if (character?.name) {
-
                     activeCharacterName =
                         cleanName(
                             character.name
@@ -856,61 +935,98 @@ jQuery(async () => {
 
                 renderCharacterSettings();
 
-
-                if (isGenerating) {
-                    showIndicator();
-                }
+                /*
+                 * On ne lance PLUS jamais
+                 * l'indicateur ici.
+                 */
             }
         );
     }
 
 
-    /* GENERATION */
+    /* =====================================================
+       GENERATION
+    ===================================================== */
 
-    eventSource.on(
-        event_types.GENERATION_STARTED,
-        showIndicator
-    );
+    /*
+     * IMPORTANT :
+     *
+     * L'indicateur démarre UNIQUEMENT ici.
+     *
+     * On ne l'appelle plus depuis
+     * STREAM_TOKEN_RECEIVED.
+     */
 
+    if (event_types.GENERATION_STARTED) {
 
-    eventSource.on(
-        event_types.GENERATION_ENDED,
-        hideIndicator
-    );
+        eventSource.on(
+            event_types.GENERATION_STARTED,
+            () => {
 
-
-    eventSource.on(
-        event_types.MESSAGE_RECEIVED,
-        hideIndicator
-    );
-
-
-    eventSource.on(
-        event_types.GENERATION_STOPPED,
-        hideIndicator
-    );
-
-
-    /* STREAMING */
-
-    eventSource.on(
-        event_types.STREAM_TOKEN_RECEIVED,
-        () => {
-
-            const settings =
-                getSettings();
-
-            if (
-                settings.show_streaming &&
-                !isGenerating
-            ) {
+                /*
+                 * Une vraie génération vient
+                 * de commencer.
+                 */
                 showIndicator();
             }
-        }
-    );
+        );
+    }
 
 
-    /* CHAT CHANGED */
+    /* =====================================================
+       GENERATION END
+    ===================================================== */
+
+    if (event_types.GENERATION_ENDED) {
+
+        eventSource.on(
+            event_types.GENERATION_ENDED,
+            () => {
+                hideIndicator();
+            }
+        );
+    }
+
+
+    /* =====================================================
+       GENERATION STOPPED
+    ===================================================== */
+
+    if (event_types.GENERATION_STOPPED) {
+
+        eventSource.on(
+            event_types.GENERATION_STOPPED,
+            () => {
+                hideIndicator();
+            }
+        );
+    }
+
+
+    /* =====================================================
+       MESSAGE RECEIVED
+    ===================================================== */
+
+    if (event_types.MESSAGE_RECEIVED) {
+
+        eventSource.on(
+            event_types.MESSAGE_RECEIVED,
+            () => {
+
+                /*
+                 * Sécurité supplémentaire :
+                 * dès que la réponse est reçue,
+                 * l'indicateur disparaît.
+                 */
+                hideIndicator();
+            }
+        );
+    }
+
+
+    /* =====================================================
+       CHAT CHANGED
+    ===================================================== */
 
     if (event_types.CHAT_CHANGED) {
 
@@ -919,6 +1035,13 @@ jQuery(async () => {
             () => {
 
                 activeCharacterName = "";
+
+                /*
+                 * Un changement de conversation
+                 * doit toujours supprimer
+                 * l'indicateur.
+                 */
+                hideIndicator();
 
                 renderCharacterSettings();
 
@@ -929,6 +1052,6 @@ jQuery(async () => {
 
 
     console.log(
-        "[y-ntyping] Loaded v1.2.0"
+        "[y-ntyping] Loaded v1.2.1 - generation-only typing indicator"
     );
 });
