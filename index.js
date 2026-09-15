@@ -35,6 +35,8 @@ const defaultSettings = {
 let indicatorEl = null;
 let isGenerating = false;
 let activeCharacterName = "";
+let generationId = 0;
+let stateCheckTimer = null;
 
 
 /* =========================================================
@@ -45,8 +47,7 @@ function getSettings() {
     extension_settings[extensionName] =
         extension_settings[extensionName] || {};
 
-    const settings =
-        extension_settings[extensionName];
+    const settings = extension_settings[extensionName];
 
     for (const [key, value] of Object.entries(defaultSettings)) {
         if (settings[key] === undefined) {
@@ -105,9 +106,6 @@ function getCharacterNamesInCurrentChat() {
         return [];
     }
 
-
-    /* GROUP CHAT */
-
     if (
         ctx.groupId &&
         Array.isArray(ctx.groups)
@@ -137,9 +135,6 @@ function getCharacterNamesInCurrentChat() {
         }
     }
 
-
-    /* SINGLE CHAT */
-
     if (
         ctx.characters &&
         ctx.characterId != null
@@ -153,7 +148,6 @@ function getCharacterNamesInCurrentChat() {
             ];
         }
     }
-
 
     if (ctx.name2) {
         return [
@@ -176,9 +170,6 @@ function getCurrentCharName() {
         return "Character";
     }
 
-
-    /* SINGLE CHARACTER */
-
     if (
         ctx.characters &&
         ctx.characterId != null
@@ -190,7 +181,6 @@ function getCurrentCharName() {
             return cleanName(character.name);
         }
     }
-
 
     if (ctx.name2) {
         return cleanName(ctx.name2);
@@ -315,28 +305,18 @@ function updateIndicator() {
     const color =
         getCharacterColor(name);
 
-
-    /*
-     * IMPORTANT:
-     * Ne jamais supprimer la classe "visible"
-     * ici. Cette fonction sert uniquement à
-     * mettre à jour le style.
-     */
-
     indicatorEl.classList.remove(
         "position-bottom",
-        "position-top",
-        "position-left",
-        "position-right"
+        "position-inline",
+        "position-floating"
     );
 
     indicatorEl.classList.remove(
         "anim-bounce",
         "anim-pulse",
-        "anim-fade",
-        "anim-none"
+        "anim-wave",
+        "anim-fade"
     );
-
 
     indicatorEl.classList.add(
         `position-${settings.position}`
@@ -346,12 +326,10 @@ function updateIndicator() {
         `anim-${settings.animation}`
     );
 
-
     indicatorEl.classList.toggle(
         "show-avatar",
         !!settings.show_avatar
     );
-
 
     indicatorEl.style.setProperty(
         "--yn-name-color",
@@ -391,6 +369,79 @@ function updateIndicator() {
 
 
 /* =========================================================
+   GENERATION STATE
+========================================================= */
+
+/*
+ * SillyTavern affiche le bouton STOP pendant une génération.
+ * Quand le bouton d'envoi normal revient, la génération est
+ * terminée même si un événement de fin a été raté.
+ */
+
+function isSillyTavernGenerating() {
+    const stopButton =
+        document.querySelector(
+            "#stop_generation"
+        );
+
+    if (
+        stopButton &&
+        stopButton.offsetParent !== null
+    ) {
+        return true;
+    }
+
+    const sendButton =
+        document.querySelector(
+            "#send_but"
+        );
+
+    if (sendButton) {
+        const display =
+            window.getComputedStyle(
+                sendButton
+            ).display;
+
+        if (display === "none") {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+function startStateCheck() {
+    stopStateCheck();
+
+    stateCheckTimer =
+        setInterval(() => {
+
+            if (!isGenerating) {
+                return;
+            }
+
+            /*
+             * Si SillyTavern n'est plus en génération,
+             * on cache immédiatement l'indicateur.
+             */
+            if (!isSillyTavernGenerating()) {
+                hideIndicator();
+            }
+
+        }, 100);
+}
+
+
+function stopStateCheck() {
+    if (stateCheckTimer) {
+        clearInterval(stateCheckTimer);
+        stateCheckTimer = null;
+    }
+}
+
+
+/* =========================================================
    SHOW
 ========================================================= */
 
@@ -401,10 +452,20 @@ function showIndicator() {
         return;
     }
 
+    /*
+     * Protection supplémentaire :
+     * si ST n'est pas réellement en train de générer,
+     * on ne montre rien.
+     */
+    if (!isSillyTavernGenerating()) {
+        return;
+    }
+
     if (!indicatorEl) {
         createIndicator();
     }
 
+    generationId++;
 
     const name =
         getCurrentCharName();
@@ -418,22 +479,18 @@ function showIndicator() {
             name
         );
 
-
     indicatorEl.querySelector(
         ".yn-name"
     ).textContent = name;
-
 
     indicatorEl.querySelector(
         ".yn-text"
     ).textContent = ` ${text}`;
 
-
     const avatar =
         indicatorEl.querySelector(
             ".yn-avatar"
         );
-
 
     if (settings.show_avatar) {
         const src =
@@ -451,19 +508,15 @@ function showIndicator() {
             "none";
     }
 
-
     updateIndicator();
 
-
-    /*
-     * C'est ici uniquement que l'indicateur
-     * devient visible.
-     */
     indicatorEl.classList.add(
         "visible"
     );
 
     isGenerating = true;
+
+    startStateCheck();
 }
 
 
@@ -472,20 +525,24 @@ function showIndicator() {
 ========================================================= */
 
 function hideIndicator() {
+    generationId++;
+
+    isGenerating = false;
+
+    activeCharacterName = "";
+
+    stopStateCheck();
+
     if (indicatorEl) {
         indicatorEl.classList.remove(
             "visible"
         );
     }
-
-    isGenerating = false;
-
-    activeCharacterName = "";
 }
 
 
 /* =========================================================
-   CHARACTER SETTINGS UI
+   CHARACTER SETTINGS
 ========================================================= */
 
 function renderCharacterSettings() {
@@ -498,16 +555,13 @@ function renderCharacterSettings() {
         return;
     }
 
-
     const names =
         getCharacterNamesInCurrentChat();
 
     const settings =
         getSettings();
 
-
     container.innerHTML = "";
-
 
     if (!names.length) {
         container.innerHTML = `
@@ -520,14 +574,12 @@ function renderCharacterSettings() {
         return;
     }
 
-
     for (const name of names) {
         const row =
             document.createElement("div");
 
         row.className =
             "yn-character-row";
-
 
         row.innerHTML = `
             <span class="yn-character-name"></span>
@@ -547,17 +599,14 @@ function renderCharacterSettings() {
             </button>
         `;
 
-
         row.querySelector(
             ".yn-character-name"
         ).textContent = name;
-
 
         row.querySelector(
             ".yn-character-color"
         ).value =
             getCharacterColor(name);
-
 
         row.querySelector(
             ".yn-character-color"
@@ -573,7 +622,6 @@ function renderCharacterSettings() {
 
                 saveSettingsDebounced();
 
-
                 if (
                     isGenerating &&
                     getCurrentCharName() === name
@@ -582,7 +630,6 @@ function renderCharacterSettings() {
                 }
             }
         );
-
 
         row.querySelector(
             ".yn-reset-character"
@@ -596,13 +643,11 @@ function renderCharacterSettings() {
 
                 renderCharacterSettings();
 
-
                 if (isGenerating) {
                     updateIndicator();
                 }
             }
         );
-
 
         container.appendChild(row);
     }
@@ -617,13 +662,11 @@ async function loadSettings() {
     const settings =
         getSettings();
 
-
     $("#yn_enabled")
         .prop(
             "checked",
             settings.enabled
         );
-
 
     $("#yn_show_streaming")
         .prop(
@@ -631,73 +674,61 @@ async function loadSettings() {
             settings.show_streaming
         );
 
-
     $("#yn_show_avatar")
         .prop(
             "checked",
             settings.show_avatar
         );
 
-
     $("#yn_position")
         .val(
             settings.position
         );
-
 
     $("#yn_animation")
         .val(
             settings.animation
         );
 
-
     $("#yn_default_color")
         .val(
             settings.default_color
         );
-
 
     $("#yn_text")
         .val(
             settings.text
         );
 
-
     $("#yn_font_size")
         .val(
             settings.font_size
         );
-
 
     $("#yn_name_size")
         .val(
             settings.name_size
         );
 
-
     $("#yn_gap")
         .val(
             settings.gap
         );
-
 
     $("#yn_offset_x")
         .val(
             settings.offset_x
         );
 
-
     $("#yn_offset_y")
         .val(
             settings.offset_y
         );
 
-
     $("#yn_avatar_size")
         .val(
             settings.avatar_size
         );
-
 
     renderCharacterSettings();
 
@@ -728,14 +759,13 @@ jQuery(async () => {
         );
     }
 
-
     await loadSettings();
 
     createIndicator();
 
 
     /* =====================================================
-       BASIC SETTINGS
+       SETTINGS
     ===================================================== */
 
     $("#yn_enabled").on(
@@ -909,7 +939,7 @@ jQuery(async () => {
 
 
     /* =====================================================
-       GROUP CHARACTER DETECTION
+       GROUP MEMBER
     ===================================================== */
 
     if (event_types.GROUP_MEMBER_DRAFTED) {
@@ -924,7 +954,6 @@ jQuery(async () => {
                 const character =
                     ctx?.characters?.[chId];
 
-
                 if (character?.name) {
                     activeCharacterName =
                         cleanName(
@@ -932,30 +961,15 @@ jQuery(async () => {
                         );
                 }
 
-
                 renderCharacterSettings();
-
-                /*
-                 * On ne lance PLUS jamais
-                 * l'indicateur ici.
-                 */
             }
         );
     }
 
 
     /* =====================================================
-       GENERATION
+       GENERATION START
     ===================================================== */
-
-    /*
-     * IMPORTANT :
-     *
-     * L'indicateur démarre UNIQUEMENT ici.
-     *
-     * On ne l'appelle plus depuis
-     * STREAM_TOKEN_RECEIVED.
-     */
 
     if (event_types.GENERATION_STARTED) {
 
@@ -964,10 +978,18 @@ jQuery(async () => {
             () => {
 
                 /*
-                 * Une vraie génération vient
-                 * de commencer.
+                 * Petit délai : laisse ST mettre
+                 * son interface de génération à jour.
                  */
-                showIndicator();
+                setTimeout(() => {
+
+                    if (
+                        isSillyTavernGenerating()
+                    ) {
+                        showIndicator();
+                    }
+
+                }, 30);
             }
         );
     }
@@ -981,9 +1003,7 @@ jQuery(async () => {
 
         eventSource.on(
             event_types.GENERATION_ENDED,
-            () => {
-                hideIndicator();
-            }
+            hideIndicator
         );
     }
 
@@ -996,9 +1016,7 @@ jQuery(async () => {
 
         eventSource.on(
             event_types.GENERATION_STOPPED,
-            () => {
-                hideIndicator();
-            }
+            hideIndicator
         );
     }
 
@@ -1011,15 +1029,7 @@ jQuery(async () => {
 
         eventSource.on(
             event_types.MESSAGE_RECEIVED,
-            () => {
-
-                /*
-                 * Sécurité supplémentaire :
-                 * dès que la réponse est reçue,
-                 * l'indicateur disparaît.
-                 */
-                hideIndicator();
-            }
+            hideIndicator
         );
     }
 
@@ -1034,13 +1044,6 @@ jQuery(async () => {
             event_types.CHAT_CHANGED,
             () => {
 
-                activeCharacterName = "";
-
-                /*
-                 * Un changement de conversation
-                 * doit toujours supprimer
-                 * l'indicateur.
-                 */
                 hideIndicator();
 
                 renderCharacterSettings();
@@ -1052,6 +1055,6 @@ jQuery(async () => {
 
 
     console.log(
-        "[y-ntyping] Loaded v1.2.1 - generation-only typing indicator"
+        "[y-ntyping] Loaded v1.3.0 - strict generation indicator"
     );
 });
