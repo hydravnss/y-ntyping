@@ -901,7 +901,7 @@ jQuery(async () => {
 
         const html =
             await $.get(
-                `${extensionFolderPath}/setting.html`
+                `${extensionFolderPath}/setting.html?v=1.5.1`
             );
 
         $("#extensions_settings2")
@@ -1321,6 +1321,6 @@ jQuery(async () => {
 
 
     console.log(
-        "[y-ntyping] v1.5.0 loaded"
+        "[y-ntyping] v1.5.1 loaded"
     );
 });
