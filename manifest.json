@@ -1,0 +1,12 @@
+{
+  "display_name": "y-ntyping",
+  "loading_order": 800,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "hydravnss",
+  "version": "1.5.2",
+  "homePage": "https://github.com/hydravnss/y-ntyping",
+  "auto_update": false
+}

@@ -1321,6 +1321,6 @@ jQuery(async () => {
 
 
     console.log(
-        "[y-ntyping] v1.5.1 loaded"
+        "[y-ntyping] v1.5.2 loaded"
     );
 });
