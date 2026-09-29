@@ -81,6 +81,34 @@
 }
 
 
+#yn-typing-indicator.position-custom {
+    position: fixed;
+
+    left: var(--yn-x, 50%);
+    top: var(--yn-y, 80%);
+
+    margin: 0;
+
+    transform:
+        translate(
+            calc(-50% + var(--yn-offset-x, 0px)),
+            calc(-50% + var(--yn-offset-y, 0px))
+        );
+
+    max-width: 95vw;
+}
+
+#yn-typing-indicator.yn-preview {
+    pointer-events: auto;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+
+    outline: 1px dashed rgba(255,255,255,.45);
+    outline-offset: 3px;
+}
+
+
 /* =========================================================
    AVATAR
 ========================================================= */
@@ -413,4 +441,32 @@
     height: 30px !important;
 
     padding: 0 !important;
+}
+
+.yn-custom-settings {
+    padding: 8px 0;
+}
+
+.yn-custom-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.yn-custom-settings label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+}
+
+.yn-bar {
+    width: 100%;
+    margin: 4px 0 6px 0;
+}
+
+.yn-bar-value {
+    opacity: .7;
+}
+
+#yn_preview.yn-preview-on {
+    outline: 1px solid var(--SmartThemeQuoteColor, #7dffb3);
 }

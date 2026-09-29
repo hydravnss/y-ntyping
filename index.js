@@ -22,6 +22,8 @@ const defaultSettings = {
     gap: 7,
     offset_x: 0,
     offset_y: 0,
+    custom_x: 50,
+    custom_y: 80,
     avatar_size: 28,
     characters: {},
 };
@@ -30,6 +32,7 @@ let indicatorEl = null;
 let isGenerating = false;
 let activeCharacterName = "";
 let generationWatcher = null;
+let previewActive = false;
 
 
 /* =========================================================
@@ -295,6 +298,17 @@ function stopGenerationWatcher() {
    INDICATOR
 ========================================================= */
 
+function clampPercent(value, fallback) {
+    const n = Number(value);
+
+    if (!Number.isFinite(n)) {
+        return fallback;
+    }
+
+    return Math.min(100, Math.max(0, n));
+}
+
+
 function createIndicator() {
     if (indicatorEl) {
         return;
@@ -357,7 +371,8 @@ function updateIndicator() {
     indicatorEl.classList.remove(
         "position-bottom",
         "position-inline",
-        "position-floating"
+        "position-floating",
+        "position-custom"
     );
 
     indicatorEl.classList.remove(
@@ -411,6 +426,21 @@ function updateIndicator() {
     );
 
     indicatorEl.style.setProperty(
+        "--yn-x",
+        `${clampPercent(settings.custom_x, 50)}%`
+    );
+
+    indicatorEl.style.setProperty(
+        "--yn-y",
+        `${clampPercent(settings.custom_y, 80)}%`
+    );
+
+    indicatorEl.classList.toggle(
+        "yn-preview",
+        previewActive
+    );
+
+    indicatorEl.style.setProperty(
         "--yn-avatar-size",
         `${Number(settings.avatar_size) || 28}px`
     );
@@ -421,12 +451,12 @@ function updateIndicator() {
    SHOW
 ========================================================= */
 
-function showIndicator() {
+function showIndicator(preview = false) {
 
     const settings =
         getSettings();
 
-    if (!settings.enabled) {
+    if (!preview && !settings.enabled) {
         return;
     }
 
@@ -435,7 +465,7 @@ function showIndicator() {
      * impossible d'afficher l'indicateur
      * si SillyTavern n'affiche pas son bouton STOP.
      */
-    if (!isActuallyGenerating()) {
+    if (!preview && !isActuallyGenerating()) {
         hideIndicator();
         return;
     }
@@ -496,11 +526,17 @@ function showIndicator() {
             "none";
     }
 
+    previewActive = preview;
+
     updateIndicator();
 
     indicatorEl.classList.add(
         "visible"
     );
+
+    if (preview) {
+        return;
+    }
 
     isGenerating = true;
 
@@ -515,6 +551,19 @@ function showIndicator() {
 function hideIndicator() {
 
     isGenerating = false;
+
+    previewActive = false;
+
+    const previewBtn =
+        document.getElementById(
+            "yn_preview"
+        );
+
+    if (previewBtn) {
+        previewBtn.classList.remove(
+            "yn-preview-on"
+        );
+    }
 
     activeCharacterName = "";
 
@@ -646,6 +695,118 @@ function renderCharacterSettings() {
 
 
 /* =========================================================
+   POSITION BARS (custom placement)
+========================================================= */
+
+function syncPositionBars() {
+
+    const settings =
+        getSettings();
+
+    const x =
+        clampPercent(settings.custom_x, 50);
+
+    const y =
+        clampPercent(settings.custom_y, 80);
+
+    $("#yn_custom_x").val(x);
+    $("#yn_custom_y").val(y);
+
+    $("#yn_custom_x_value").text(`${Math.round(x)}%`);
+    $("#yn_custom_y_value").text(`${Math.round(y)}%`);
+}
+
+
+function setCustomPosition(x, y) {
+
+    const settings =
+        getSettings();
+
+    settings.custom_x =
+        Math.round(clampPercent(x, 50) * 10) / 10;
+
+    settings.custom_y =
+        Math.round(clampPercent(y, 80) * 10) / 10;
+
+    if (settings.position !== "custom") {
+        settings.position = "custom";
+        $("#yn_position").val("custom");
+    }
+
+    saveSettingsDebounced();
+
+    syncPositionBars();
+
+    updateIndicator();
+}
+
+
+function togglePreview() {
+
+    const button =
+        document.getElementById(
+            "yn_preview"
+        );
+
+    if (previewActive) {
+        hideIndicator();
+        return;
+    }
+
+    createIndicator();
+
+    showIndicator(true);
+
+    button?.classList.add(
+        "yn-preview-on"
+    );
+}
+
+
+function setupDragPlacement() {
+
+    /*
+     * Pendant l'aperçu, on peut aussi attraper
+     * l'indicateur avec la souris / le doigt
+     * et le déposer où on veut.
+     */
+
+    document.addEventListener(
+        "pointerdown",
+        event => {
+
+            if (
+                !previewActive ||
+                !indicatorEl ||
+                !indicatorEl.contains(event.target)
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const move = e => {
+                setCustomPosition(
+                    (e.clientX / window.innerWidth) * 100,
+                    (e.clientY / window.innerHeight) * 100
+                );
+            };
+
+            const up = () => {
+                document.removeEventListener("pointermove", move);
+                document.removeEventListener("pointerup", up);
+                document.removeEventListener("pointercancel", up);
+            };
+
+            document.addEventListener("pointermove", move);
+            document.addEventListener("pointerup", up);
+            document.addEventListener("pointercancel", up);
+        }
+    );
+}
+
+
+/* =========================================================
    LOAD
 ========================================================= */
 
@@ -721,6 +882,8 @@ async function loadSettings() {
         .val(
             settings.avatar_size
         );
+
+    syncPositionBars();
 
     renderCharacterSettings();
 
@@ -921,6 +1084,45 @@ jQuery(async () => {
     );
 
 
+    $("#yn_custom_x").on(
+        "input change",
+        function () {
+            const s = getSettings();
+            setCustomPosition(
+                Number($(this).val()),
+                s.custom_y
+            );
+        }
+    );
+
+
+    $("#yn_custom_y").on(
+        "input change",
+        function () {
+            const s = getSettings();
+            setCustomPosition(
+                s.custom_x,
+                Number($(this).val())
+            );
+        }
+    );
+
+
+    $("#yn_custom_reset").on(
+        "click",
+        () => setCustomPosition(50, 80)
+    );
+
+
+    $("#yn_preview").on(
+        "click",
+        togglePreview
+    );
+
+
+    setupDragPlacement();
+
+
     $("#yn_refresh_characters")
         .on(
             "click",
@@ -1119,6 +1321,6 @@ jQuery(async () => {
 
 
     console.log(
-        "[y-ntyping] v1.4.0 loaded"
+        "[y-ntyping] v1.5.0 loaded"
     );
 });
